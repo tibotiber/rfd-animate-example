@@ -1,5 +1,5 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import App from './App'
+import Chart from './Chart'
 
-ReactDOM.render(<App />, document.getElementById('root'))
+ReactDOM.render(<Chart />, document.getElementById('root'))

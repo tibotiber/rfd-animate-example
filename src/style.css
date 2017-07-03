@@ -1,0 +1,31 @@
+button {
+  position: absolute;
+  margin: 5em;
+}
+
+
+/* styles below are from Mike Bostock's D3 chart used in the example
+	   https://bl.ocks.org/mbostock/3943967 */
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: auto;
+  position: relative;
+}
+
+text {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+form {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
