@@ -47,32 +47,30 @@ class Chart extends React.Component {
 
     var n = 4 // number of layers
     var m = 58 // number of samples per layer
-    var stack = d3.layout.stack()
-    var layers = stack(d3.range(n).map(function () { return bumpLayer(m, 0.1) }))
-    var yGroupMax = d3.max(layers, function (layer) { return d3.max(layer, function (d) { return d.y }) })
-    var yStackMax = d3.max(layers, function (layer) { return d3.max(layer, function (d) { return d.y0 + d.y }) })
+    var layers = d3.stack().keys(d3.range(n))(d3.transpose(d3.range(n).map(function () { return bumpLayer(m, 0.1) })))
+    var yGroupMax = d3.max(layers, function (layer) { return d3.max(layer, function (d) { return d[1]-d[0] }) })
+    var yStackMax = d3.max(layers, function (layer) { return d3.max(layer, function (d) { return d[1] }) })
 
     var margin = {top: 40, right: 10, bottom: 20, left: 10}
     var width = 960 - margin.left - margin.right
     var height = 500 - margin.top - margin.bottom
-
-    var x = d3.scale.ordinal()
+   
+    var x = d3.scaleBand()
         .domain(d3.range(m))
-        .rangeRoundBands([0, width], 0.08)
+        .rangeRound([0, width])
+        .padding(0.08)
 
-    var y = d3.scale.linear()
-        .domain([0, yStackMax])
+    var y = d3.scaleLinear()
+        .domain([yStackMax, 0])
         .range([height, 0])
-
-    var color = d3.scale.linear()
+    
+    var color = d3.scaleLinear()
         .domain([0, n - 1])
         .range(['#aad', '#556'])
 
-    var xAxis = d3.svg.axis()
-        .scale(x)
+    var xAxis = d3.axisBottom(x)
         .tickSize(0)
         .tickPadding(6)
-        .orient('bottom')
 
     var svg = d3.select(faux).append('svg')
         .attr('width', width + margin.left + margin.right)
@@ -89,15 +87,15 @@ class Chart extends React.Component {
     var rect = layer.selectAll('rect')
         .data(function (d) { return d })
       .enter().append('rect')
-        .attr('x', function (d) { return x(d.x) })
+        .attr('x', function (d, i) { return x(i) })
         .attr('y', height)
-        .attr('width', x.rangeBand())
+        .attr('width', x.bandwidth())
         .attr('height', 0)
 
     rect.transition()
         .delay(function (d, i) { return i * 10 })
-        .attr('y', function (d) { return y(d.y0 + d.y) })
-        .attr('height', function (d) { return y(d.y0) - y(d.y0 + d.y) })
+        .attr('y', function (d) { return height - y(d[1]) })
+        .attr('height', function (d) { return y((d[1] - d[0])) })
 
     this.props.animateFauxDOM(800)
 
@@ -112,26 +110,26 @@ class Chart extends React.Component {
       rect.transition()
           .duration(500)
           .delay(function (d, i) { return i * 10 })
-          .attr('x', function (d, i, j) { return x(d.x) + x.rangeBand() / n * j })
-          .attr('width', x.rangeBand() / n)
+          .attr('x', function (d, i) { return x(i) + x.bandwidth() / n * this.parentNode.__data__.key; })
+          .attr('width', x.bandwidth() / n)
         .transition()
-          .attr('y', function (d) { return y(d.y) })
-          .attr('height', function (d) { return height - y(d.y) })
+          .attr('y', function (d) { return y(d[1] - d[0]) })
+          .attr('height', function (d) { return height - y(d[1] - d[0]) })
 
       component.props.animateFauxDOM(2000)
     }
 
     this.transitionStacked = function () {
-      y.domain([0, yStackMax])
+      y.domain([yStackMax, 0])
 
       rect.transition()
           .duration(500)
           .delay(function (d, i) { return i * 10 })
-          .attr('y', function (d) { return y(d.y0 + d.y) })
-          .attr('height', function (d) { return y(d.y0) - y(d.y0 + d.y) })
+          .attr('y', function (d) { return height - y(d[1]) })
+          .attr('height', function (d) { return y(d[1] - d[0]) })
         .transition()
-          .attr('x', function (d) { return x(d.x) })
-          .attr('width', x.rangeBand())
+          .attr('x', function (d, i) { return x(i) })
+          .attr('width', x.bandwidth())
 
       component.props.animateFauxDOM(2000)
     }
@@ -152,7 +150,7 @@ class Chart extends React.Component {
       var i
       for (i = 0; i < n; ++i) a[i] = o + o * Math.random()
       for (i = 0; i < 5; ++i) bump(a)
-      return a.map(function (d, i) { return {x: i, y: Math.max(0, d)} })
+      return a.map(function (d) { return Math.max(0, d) })
     }
   }
 }
